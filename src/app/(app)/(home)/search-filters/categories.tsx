@@ -5,13 +5,13 @@ import { ListFilterIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CategoriesGetManyOutput } from "@/modules/categories/types";
 
 import { CategoryDropdown } from "./category-dropdown";
-import { CustomCategory } from "../types";
 import { CategoriesSiderbar } from "./categories-sidebar";
 
 interface CategoriesProps {
-  data: CustomCategory[];
+  data: CategoriesGetManyOutput;
 };
 
 export const Categories = ({ data }: CategoriesProps ) => {
@@ -65,7 +65,6 @@ export const Categories = ({ data }: CategoriesProps ) => {
       <CategoriesSiderbar 
         open={isSidebarOpen}
         onOpenChange={setIsSidebarOpen}
-        data={data}
       />
 
       {/* Hidden div to mesause all items */}
