@@ -29,7 +29,7 @@ export const CategoriesSiderbar = ({
   const router = useRouter();
 
   const [parentCategories, setParentCategories] = useState<CategoriesGetManyOutput | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<CategoriesGetManyOutput[1] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoriesGetManyOutput[number] | null>(null);
 
   // If we have parent categories, show those, otherwise show root categories
   const currentCategories = parentCategories ?? data ?? [];
@@ -40,9 +40,9 @@ export const CategoriesSiderbar = ({
     onOpenChange(open);
   };
 
-  const handleCategoryClick = (category: CategoriesGetManyOutput[1]) => {
+  const handleCategoryClick = (category: CategoriesGetManyOutput[number]) => {
     if (category.subcategories && category.subcategories.length > 0) {
-      setParentCategories(category.subcategories as CategoriesGetManyOutput);
+      setParentCategories(category.subcategories as unknown as CategoriesGetManyOutput);
       setSelectedCategory(category)
     } else {
       // This is a leaf category (no subcategories)
