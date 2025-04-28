@@ -22,32 +22,45 @@ export const authRouter = createTRPCRouter({
   register: baseProcedure
     .input(registerSchema)
     .mutation(async ({ input, ctx }) => {
-      const existingData = await ctx.db.find({
-        collection: "users",
-        limit: 1,
-        where: {
-          username: {
-            equals: input.username
+      try {
+        const existingData = await ctx.db.find({
+          collection: "users",
+          limit: 1,
+          where: {
+            username: {
+              equals: input.username,
+            },
           },
-        },
-      });
+        });
 
-      const existingUser = existingData.docs[0];
+        const existingUser = existingData.docs[0];
+        if (existingUser) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Username already taken",
+          });
+        }
 
-      if (existingUser) {
+        await ctx.db.create({
+          collection: "users",
+          data: {
+            email: input.email,
+            username: input.username,
+            password: input.password,
+          },
+        });
+
+        return { success: true, message: "User registered successfully" };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        console.error("Registration failed:", error);
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Username already taken",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to register user",
         });
       }
-      await ctx.db.create({
-        collection: "users",
-        data: {
-          email: input.email,
-          username: input.username,
-          password: input.password,
-        },
-      });
     }),
     login: baseProcedure
     .input(loginSchema)
