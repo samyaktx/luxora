@@ -37,7 +37,7 @@ export const SearchInput = ({
       >
         <ListFilterIcon />
       </Button>
-      {session.data?.user && (
+      {session.isLoading ? null : session.data?.user && (
         <Button
           asChild
           variant="elevated"
