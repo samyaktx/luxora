@@ -1,10 +1,10 @@
-import { headers as getHeaders, cookies as getCookies } from "next/headers";
+import { headers as getHeaders } from "next/headers";
 import { TRPCError } from "@trpc/server";
 
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 
-import { AUTH_COOKIE } from "../constants";
 import { loginSchema, registerSchema } from "../schemas";
+import { generateAuthCookie } from "../utils";
 
 
 export const authRouter = createTRPCRouter({
@@ -14,10 +14,6 @@ export const authRouter = createTRPCRouter({
     const session = await ctx.db.auth({ headers });
 
     return session;
-  }),
-  logout: baseProcedure.mutation(async () => {
-    const cookies = await getCookies();
-    cookies.delete(AUTH_COOKIE);
   }),
   register: baseProcedure
     .input(registerSchema)
@@ -46,8 +42,28 @@ export const authRouter = createTRPCRouter({
           data: {
             email: input.email,
             username: input.username,
-            password: input.password,
+            password: input.password, // hash password
           },
+        });
+
+        const data = await ctx.db.login({
+          collection: "users",
+          data: {
+            email: input.email,
+            password: input.password, 
+          },
+        });
+
+        if (!data.token) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Failed to login",
+          });
+        }
+
+        await generateAuthCookie({
+          prefix: ctx.db.config.cookiePrefix,
+          value: data.token,
         });
 
         return { success: true, message: "User registered successfully" };
@@ -80,16 +96,10 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      const cookies = await getCookies();
-      cookies.set({
-        name: AUTH_COOKIE,
-        value: data.token,
-        httpOnly: true,
-        path: "/",
-        // @TODO: Ensure cross-domain cookie sharing
-        // luxora.com // initial cookie
-        // samyakt.luxora.com // cookie does not exist here
-      });
+      await generateAuthCookie({ 
+        prefix: ctx.db.config.cookiePrefix, 
+        value: data.token
+      })
 
       return data;
     }),

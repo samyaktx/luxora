@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Poppins } from 'next/font/google';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -32,12 +32,15 @@ const poppins = Poppins({
 export const SignInView = () => {
   const router = useRouter();
 
-  const trpc = useTRPC()
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
   const login = useMutation(trpc.auth.login.mutationOptions({
     onError: (error) => {
       toast.error(error.message)
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
       router.push("/");
     }
   }))
